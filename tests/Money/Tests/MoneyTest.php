@@ -10,13 +10,21 @@
 
 namespace Money\Tests;
 
+use Money\CurrencyLookupRubyMoney;
 use PHPUnit_Framework_TestCase;
 use Money\Money;
 use Money\Currency;
 
 class MoneyTest extends PHPUnit_Framework_TestCase
 {
-    public function testFactoryMethods()
+
+	protected function setUp() {
+		parent::setUp();
+		// load RubyMoney CurrencyList and register lookup
+		Currency::setCurrencyLookup(new CurrencyLookupRubyMoney());
+	}
+
+	public function testFactoryMethods()
     {
         $this->assertEquals(
             Money::EUR(25),
@@ -236,4 +244,47 @@ class MoneyTest extends PHPUnit_Framework_TestCase
     {
         $this->assertEquals($units, Money::stringToUnits($string));
     }
+
+	public function testGetAmount() {
+		/** @var Money $m */
+		$m = Money::USD(123456); // $1234.56
+		$this->assertEquals('1234.56', $m->getAmount(true));
+
+		$m = Money::USD(-123456); // $1234.56
+		$this->assertEquals('-1234.56', $m->getAmount(true));
+
+		$m = Money::USD(10023456); // $1234.56
+		$this->assertEquals('100234.56', $m->getAmount(true));
+
+		$m = Money::USD(-10023456); // $1234.56
+		$this->assertEquals('-100234.56', $m->getAmount(true));
+
+		$m = Money::USD(123400); // $1234.00
+		$this->assertEquals('1234', $m->getAmount(true));
+
+		$m = Money::USD(-123400); // $1234.00
+		$this->assertEquals('-1234', $m->getAmount(true));
+	}
+
+	public function testFormat() {
+		/** @var Money $m1 */
+		$m1 = Money::USD(123456); // $1234.56
+		/** @var Money $m2 */
+		$m2 = Money::USD(123400); // $1234.00
+
+		$this->assertEquals('$1,234.56', $m1->format());
+		$this->assertEquals('$1,234~56', $m1->format(array('decimal_mark' => '~')));
+		$this->assertEquals('$1_234.56', $m1->format(array('thousands_separator' => '_')));
+		$this->assertEquals('$1,234.56USD', $m1->format(array('with_currency' => true)));
+		$this->assertEquals('<span class="symbol">$</span><span class="amount">1,234.56</span><span class="currency">USD</span>', $m1->format(array('with_currency' => true, 'html' => true)));
+		$this->assertEquals('$1,234', $m1->format(array('no_cents' => true)));
+
+		$this->assertEquals('$1,234.56', $m1->format(array('no_cents_if_zero' => true)));
+		$this->assertEquals('$1,234', $m2->format(array('no_cents_if_zero' => true)));
+		$this->assertEquals('$1,234.56', $m1->format(array('no_cents_if_zero' => false)));
+		$this->assertEquals('$1,234.00', $m2->format(array('no_cents_if_zero' => false)));
+
+		$this->assertEquals('1,234.56$', $m1->format(array('symbol_position' => 'after')));
+	}
+
 }

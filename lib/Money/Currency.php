@@ -13,34 +13,54 @@ namespace Money;
 class Currency
 {
     /** @var string */
-    private $name;
+    private $iso_string;
 
     /** @var array */
-    private static $currencies;
+    private static $currencies = array();
+
+    /** @var array */
+    private static $default_currency;
+
+	/** @var  CurrencyLookup */
+	private static $currency_lookup;
+
+	/** @var bool flag if currency has extended options*/
+	private $is_extended_currency;
 
     /**
-     * @param string $name
+     * @param string $iso_string
      * @throws UnknownCurrencyException
      */
-    public function __construct($name)
+    public function __construct($iso_string)
     {
-        if(!isset(static::$currencies)) {
-           static::$currencies = require __DIR__.'/currencies.php';
+        if (!array_key_exists($iso_string, static::$currencies)) {
+	        // get currency from LookupHelper
+	        if (static::$currency_lookup instanceof CurrencyLookup)
+		        static::$currencies[$iso_string] = static::$currency_lookup->getCurrencyByIsoCode($iso_string);
+			elseif (empty(static::$currencies)) // if empty, load from original php-list
+				static::$currencies = require __DIR__ . '/currencies.php';
+	        else
+	            throw new UnknownCurrencyException($iso_string);
         }
+        $this->iso_string = $iso_string;
+        $this->is_extended_currency = is_array(static::$currencies[$iso_string]);
 
-        if (!array_key_exists($name, static::$currencies)) {
-            throw new UnknownCurrencyException($name);
-        }
-        $this->name = $name;
+
+	    // set currency data as obj data
+	    if (is_array(static::$currencies[$iso_string])) {
+		    foreach (static::$currencies[$iso_string] as $k => $v) {
+			    $this->$k = $v;
+		    }
+	    }
     }
 
 
-    /**
+	/**
      * @return string
      */
-    public function getName()
+    public function getIsostring()
     {
-        return $this->name;
+        return $this->iso_string;
     }
 
     /**
@@ -49,7 +69,7 @@ class Currency
      */
     public function equals(Currency $other)
     {
-        return $this->name === $other->name;
+        return $this->iso_string === $other->iso_string;
     }
 
     /**
@@ -57,6 +77,137 @@ class Currency
      */
     public function __toString()
     {
-        return $this->getName();
+        return $this->getIsostring();
     }
+
+	/**
+	 * @param array $default_currency
+	 * @return $this
+	 */
+	public static function setDefaultCurrency($default_currency) {
+		self::$default_currency = $default_currency;
+	}
+
+	/**
+	 * @return array
+	 */
+	public static function getDefaultCurrency() {
+		return self::$default_currency;
+	}
+
+	/**
+	 * @param \Money\CurrencyLookup $currency_lookup
+	 * @return $this
+	 */
+	public static function setCurrencyLookup(CurrencyLookup $currency_lookup) {
+		self::$currency_lookup = $currency_lookup;
+	}
+
+	/**
+	 * @return \Money\CurrencyLookup
+	 */
+	public static function getCurrencyLookup() {
+		return self::$currency_lookup;
+	}
+
+	/**
+	 * assert that this currency is extended
+	 * @throws CurrencyIsNoExtendedCurrencyException
+	 */
+	protected function assertExtendedCurrency() {
+		if (!$this->is_extended_currency)
+			throw new CurrencyIsNoExtendedCurrencyException(sprintf('currency %s is no extended currency, which is neede for this method. Add CurrencyLookup', $this->getIsostring()));
+	}
+
+	/**
+	 * return currency symbol or html_entity
+	 * @param bool $asHtml
+	 * @return mixed
+	 */
+	public function getSymbol($asHtml=false) {
+		return $asHtml
+			? $this->getHtmlEntity()
+			: $this->get('symbol');
+	}
+
+	/**
+	 * return is_symbol_before amount
+	 * @return bool
+	 */
+	public function getSymbolFirst() {
+		return !!$this->get('symbol_first');
+	}
+
+	/**
+	 * return string|int if symbol are before or after the amount
+	 * @param bool $asString
+	 * @return int|string
+	 */
+	public function getSymbolPosition($asString=false) {
+		$position = $this->getSymbolFirst() ? -1 : 1;
+		return $asString
+			? ($position>0?'after':'before')
+			: $position;
+	}
+
+	/**
+	 * return the decimal mark (splitter\sign) for currency
+	 * @return string
+	 */
+	public function getDecimalMark() {
+		return $this->get('decimal_mark');
+	}
+
+	/**
+	 * return the thousandsseparator (splitter|sign) for currency
+	 * @return string
+	 */
+	public function getThousandsSeparator() {
+		return $this->get('thousands_separator');
+	}
+
+	/**
+	 * return the amount of decimal places for this currency
+	 * @return float|int
+	 */
+	public function getDecimalPlaces() {
+		if ($this->getSubunitToUnit() == 1)
+			return 0;
+		elseif ($this->getSubunitToUnit() % 10 == 0)
+			return floor(log10($this->getSubunitToUnit()));
+		else
+			return floor(log10($this->getSubunitToUnit()) + 1);
+	}
+
+	/**
+	 * return the factor between unit/subunit
+	 * @return int
+	 */
+	public function getSubunitToUnit() {
+		$this->assertExtendedCurrency();
+		return (int)$this->get('subunit_to_unit');
+	}
+
+	/**
+	 * return the html_entity of the currency symbol
+	 * @return string
+	 */
+	private function getHtmlEntity() {
+		return $this->get('html_entity');
+	}
+
+	/**
+	 * return a extended currencyvalue if currency is extended and value exists
+	 * @param $string
+	 * @return mixed
+	 */
+	protected function get($key) {
+		$this->assertExtendedCurrency();
+		if (!isset($this->$key))
+			throw new UnknownCurrencyExtendedValueException(sprintf('the extended value %s is not set in currency %s', $key, $this->getIsostring()));
+		return $this->$key;
+	}
+
 }
+// set the defaultCurrency
+Currency::setDefaultCurrency(@constant('DEFAULT_CURRENCY') ?: 'EUR');

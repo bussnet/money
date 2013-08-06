@@ -28,15 +28,17 @@ class Money
     /**
      * Create a Money instance
      * @param  integer $amount    Amount, expressed in the smallest units of $currency (eg cents)
-     * @param  \Money\Currency $currency
+     * @param  \Money\Currency|string $currency as Obj or isoString
      * @throws \Money\InvalidArgumentException
      */
-    public function __construct($amount, Currency $currency)
+    public function __construct($amount, Currency $currency=null)
     {
         if (!is_int($amount)) {
             throw new InvalidArgumentException("The first parameter of Money must be an integer. It's the amount, expressed in the smallest units of currency (eg cents)");
         }
         $this->amount = $amount;
+	    if (!$currency instanceof Currency)
+		    $currency = new Currency($currency ? : Currency::getDefaultCurrency());
         $this->currency = $currency;
     }
 
@@ -125,12 +127,24 @@ class Money
         return $this->amount;
     }
 
-    /**
-     * @return int
-     */
-    public function getAmount()
+	/**
+	 * @param bool $asUnit - default as (int)cent for internals, with true for exernals(string) (formfields etc) as $, EUR etc.
+	 * if subunit == 0 -> strip decimal places
+	 * @param array $params
+	 *  force_decimal -> add ,00 if cents are empty ("0"-quantitiy from decimalPlaces)
+	 * @return int|string
+	 */
+	public function getAmount($asUnit=false, $params=array())
     {
-        return $this->amount;
+	    if (!$asUnit)
+		    return $this->amount;
+
+	    // without decimal if == 0 if params dont force
+	    $subunit = (string)floor($this->amount) % $this->currency->getSubunitToUnit();
+	    if (($subunit == 0 && (!isset($params['force_decimal']) || !$params['force_decimal'])) || $this->currency->getDecimalPlaces() == 0)
+		    return (string)floor($this->amount) / $this->currency->getSubunitToUnit();
+
+	    return (string)number_format($this->amount / $this->currency->getSubunitToUnit(), $this->currency->getDecimalPlaces(), $this->currency->getDecimalMark(), '');
     }
 
     /**
@@ -273,4 +287,113 @@ class Money
 
         return (int) $units;
     }
+
+	/**
+	 * @see Money::stringToUnits()
+	 */
+	public static function parseMoneyString($string) {
+		return self::stringToUnits($string);
+	}
+
+	/**
+	 * returns the formatted Money Amount
+	 * @param array $params
+	 *  display_free => shows 'free' if amount == 0
+	 *  html => display html formatted
+	 *  symbol => user_defined symbol
+	 *  no_cents => show no cents
+	 *  no_cents_if_zero => show no cents if ==00
+	 *  thousands_separator => overwrite the currency thousands_separator
+	 *  decimal_mark => overwrite the currency decimal_mark
+	 *  with_currency => append currency ISOCODE
+	 * @return mixed|string
+	 */
+	public function format($params = array()) {
+
+		// show 'free'
+		if ($this->amount === 0) {
+			if (is_string($params['display_free']))
+				return $params['display_free'];
+			elseif (isset($params['display_free']) && $params['display_free'])
+				return "free";
+		}
+
+		// html symbol
+		$symbolValue = $this->currency->getSymbol(isset($params['html']) && $params['html']);
+
+		// userdefined symbol
+		if (isset($params['symbol']) && $params['symbol'] !== true) {
+			if (!$params['symbol'])
+				$symbolValue = '';
+			else
+				$symbolValue = $params['symbol'];
+		}
+
+		// show no_cents
+		if (isset($params['no_cents']) && $params['no_cents'] === true) {
+			$formatted = (string)floor($this->getAmount(true));
+		// no_cents if ==00 -> default behjaviour from getAmount(true)
+		} elseif (isset($params['no_cents_if_zero']) && $params['no_cents_if_zero'] === true && $this->amount % $this->currency->getSubunitToUnit() == 0) {
+			$formatted = (string)$this->getAmount(true);
+		} else {
+			$formatted = $this->getAmount(true, array('force_decimal' => true));
+		}
+
+		// warp span arrount amount if html
+		if (isset($params['html']) && $params['html']) {
+			$formatted = '<span class="amount">' . $formatted . '</span>';
+		}
+
+		if (isset($params['symbol_position']))
+			$symbolPosition = $params['symbol_position'];
+		else
+			$symbolPosition = $this->currency->getSymbolPosition(true);
+
+		// wrap span arround symbol if html
+		if (isset($params['html']) && $params['html']) {
+			$symbolValue = '<span class="symbol">' . $symbolValue . '</span>';
+		}
+
+		// combine symbol and formatted amount
+		if (isset($symbolValue) && !empty($symbolValue)) {
+			$formatted = $symbolPosition === 'before'
+					? "$symbolValue$formatted"
+					: "$formatted$symbolValue";
+		}
+
+		if (isset($params['decimal_mark']) && $params['decimal_mark'] && $params['decimal_mark'] !== $this->currency->getDecimalMark()) {
+			$tmp = 1; /* Needs to be pass by ref */
+			$formatted = str_replace($this->currency->getDecimalMark(), $params['decimal_mark'], $formatted, $tmp);
+		}
+
+		$thousandsSeparatorValue = $this->getCurrency()->getThousandsSeparator();
+		if (isset($params['thousands_separator'])) {
+			if ($params['thousands_separator'] === false || $params['thousands_separator'] === null)
+				$thousandsSeparatorValue = '';
+			elseif ($params['thousands_separator'])
+				$thousandsSeparatorValue = $params['thousands_separator'];
+		}
+
+		$formatted = preg_replace('/(\d)(?=(?:\d{3})+(?:[^\d]|$))/', '\1' . $thousandsSeparatorValue, $formatted);
+
+		if (isset($params['with_currency']) && $params['with_currency']) {
+
+			if (isset($params['html']) && $params['html'])
+				$formatted .= '<span class="currency">'. $this->currency->__toString(). '</span>';
+			else
+				$formatted .= $this->currency->__toString();
+		}
+
+		return $formatted;
+	}
+
+
+	/**
+	 * build string represantiation of the amount without formatting and currency sign
+	 * @return string
+	 */
+	public function __toString() {
+		return $this->getAmount(true);
+	}
+
 }

@@ -1,14 +1,13 @@
 Money
 =====
 
-[![Build Status](https://api.travis-ci.org/mathiasverraes/money.png?branch=master)](http://travis-ci.org/mathiasverraes/money)
-
 PHP 5.3+ library to make working with money safer, easier, and fun!
 
-> "If I had a dime for every time I've seen someone use FLOAT to store currency, I'd have $999.997634" -- [Bill Karwin](https://twitter.com/billkarwin/status/347561901460447232)
+This is a fork of [Mathias Verraes' Money Library][4], extended with:
+* add CurrencyLookup, for different currency sources (example for json-file included)
+* extended List of currencies with settings (decimal_mark, subunit_factor, symbols, iso_code etc) from great [RubyMoney][5] (ISO 4217)
+* add format method for formating the Money-string
 
-In short: You shouldn't represent monetary values by a float. Wherever
-you need to represent money, use this Money value object.
 
 ```php
 <?php
@@ -24,7 +23,7 @@ assert($part2->equals(Money::EUR(333)));
 assert($part3->equals(Money::EUR(333)));
 ```
 
-The documentation is available at http://money.readthedocs.org
+The documentation (before the fork) is available at http://money.readthedocs.org
 
 
 Installation
@@ -35,9 +34,8 @@ Install the library using [composer][1]. Add the following to your `composer.jso
 ```json
 {
     "require": {
-        "mathiasverraes/money": "dev-master"
-    },
-    "minimum-stability": "dev"    
+        "bnnet/bnmoney": "~1.0"
+    }
 }
 ```
 
@@ -50,8 +48,10 @@ $ composer.phar install
 Integration
 -----------
 
-See [`MoneyBundle`][2] for [Symfony integration][3].
+See [`MoneyBundle`][2] for [Symfony integration][3] (only before the fork).
 
 [1]: http://getcomposer.org/
 [2]: https://github.com/pink-tie/MoneyBundle/
 [3]: http://symfony.com/
+[4]: https://github.com/mathiasverraes/money
+[5]: https://github.com/RubyMoney/money

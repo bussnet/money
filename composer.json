@@ -1,14 +1,14 @@
 {
-    "name": "mathiasverraes/money",
-    "description": "PHP implementation of Fowler's Money pattern",
+    "name": "bnet/bnmoney",
+    "description": "PHP Library for dealing with money and currency",
     "type": "library",
-    "keywords": [ "Money", "Value Object", "Generic Sub-domain" ],
-    "homepage": "http://verraes.net/2011/04/fowler-money-pattern-in-php/",
+    "keywords": [ "Money", "Currency" ],
+    "homepage": "https://github.com/bussnet/money",
     "license": "MIT",
     "authors": [
         {
-            "name": "Mathias Verraes",
-            "email": "mathias@verraes.net"
+            "name": "Thorsten Buss",
+            "email": "thorsten.buss@buss-networks.de"
         }
     ],
     "require": {
@@ -27,12 +27,7 @@
             "Money": "lib"
         }
     },
-
-    "config": {
-        "bin-dir": "bin"
-    },
     "suggest": {
         "pink-tie/money-bundle": "For Symfony integration."
-    },
-    "minimum-stability": "dev"
+    }
 }
