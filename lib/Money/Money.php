@@ -33,7 +33,7 @@ class Money
      */
     public function __construct($amount, Currency $currency=null)
     {
-        if (!is_int($amount)) {
+        if (!is_numeric($amount)) {
             throw new InvalidArgumentException("The first parameter of Money must be an integer. It's the amount, expressed in the smallest units of currency (eg cents)");
         }
         $this->amount = $amount;
@@ -393,7 +393,11 @@ class Money
 	 * @return string
 	 */
 	public function __toString() {
-		return $this->getAmount(true);
+		try {
+			return $this->getAmount(true);
+		} catch (\Exception $e) {
+			return 'ERR';
+		}
 	}
 
 }
