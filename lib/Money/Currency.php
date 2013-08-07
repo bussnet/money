@@ -12,6 +12,9 @@ namespace Money;
 
 class Currency
 {
+	/** @var  Currency[] */
+	static $instances = array();
+
     /** @var string */
     private $iso_string;
 
@@ -54,6 +57,19 @@ class Currency
 	    }
     }
 
+	/**
+	 * return instance of MOneyObj - for single use to reduce memory usage in loops
+	 * @param null $currency
+	 * @return Money
+	 */
+	public static function getInstance($currency = null) {
+		// get isocode from currency, direct or default
+		$iso_code = $currency instanceof Currency ? $currency->getIsostring() : ($currency ? : Currency::getDefaultCurrency());
+		if (!array_key_exists($iso_code, static::$instances)) {
+			static::$instances[$iso_code] = new static($iso_code);
+		}
+		return static::$instances[$iso_code];
+	}
 
 	/**
      * @return string
@@ -116,7 +132,7 @@ class Currency
 	 */
 	protected function assertExtendedCurrency() {
 		if (!$this->is_extended_currency)
-			throw new CurrencyIsNoExtendedCurrencyException(sprintf('currency %s is no extended currency, which is neede for this method. Add CurrencyLookup', $this->getIsostring()));
+			throw new CurrencyIsNoExtendedCurrencyException(sprintf('currency %s is no extended currency, which is need for this method. Add CurrencyLookup', $this->getIsostring()));
 	}
 
 	/**
@@ -197,6 +213,38 @@ class Currency
 	}
 
 	/**
+	 * return the numeric iso code
+	 * @return int
+	 */
+	public function getIsoNumeric() {
+		return (int)$this->get('iso_numeric');
+	}
+
+	/**
+	 * return the name of the currency
+	 * @return string
+	 */
+	public function getName() {
+		return $this->get('name');
+	}
+
+	/**
+	 * return the name of the subunit
+	 * @return string
+	 */
+	public function getSubunit() {
+		return $this->get('subunit');
+	}
+
+	/**
+	 * return list of alternate symbols - maybe empty
+	 * @return array
+	 */
+	public function getAlternateSymbols() {
+		return $this->get('alternate_symbols');
+	}
+
+	/**
 	 * return a extended currencyvalue if currency is extended and value exists
 	 * @param $string
 	 * @return mixed
@@ -208,6 +256,34 @@ class Currency
 		return $this->$key;
 	}
 
+	/**
+	 * Format Amount with given currency
+	 *
+	 * @see Money::format()
+	 * @see Money::getInstance()
+	 * @param int $amount as subunit
+	 * @param string|Currency $currency isoCode or currencyObj
+	 * @param array $params params to format
+	 * @return string
+	 */
+	public static function format($amount, $currency=null, $params = array()) {
+		return Money::getInstance($currency, $amount)->format($params);
+	}
+
+	/**
+	 * return subunit amount legibly - make human readable
+	 *
+	 * @see Money::getAmount()
+	 * @see Money::getInstance()
+	 * @param int $amount as subunit
+	 * @param string|Currency $currency isoCode or currencyObj
+	 * @param array $params params for Money::getAmount()
+	 * @return string
+	 */
+	public static function legibly($amount, $currency=null, $params = array()) {
+		return Money::getInstance($currency, $amount)->getAmount(true, $params);
+	}
+
 }
-// set the defaultCurrency
+// set the defaultCurrency - EUR if DEFAULT_CURRENCY const undefined
 Currency::setDefaultCurrency(@constant('DEFAULT_CURRENCY') ?: 'EUR');

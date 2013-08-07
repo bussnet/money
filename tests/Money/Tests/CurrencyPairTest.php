@@ -10,13 +10,15 @@
 
 namespace Money\Tests;
 
+require_once('MoneyTestCase.php');
+
 use PHPUnit_Framework_TestCase;
 use Money\Money;
 use Money\Currency;
 use Money\CurrencyPair;
 
-class CurrencyPairTest extends PHPUnit_Framework_TestCase
-{
+class CurrencyPairTest extends MoneyTestCase {
+
     /** @test */
     public function ConvertsEurToUsdAndBack()
     {

@@ -17,6 +17,9 @@ class Money
     const ROUND_HALF_EVEN = PHP_ROUND_HALF_EVEN;
     const ROUND_HALF_ODD = PHP_ROUND_HALF_ODD;
 
+	/** @var Money[] */
+	static $instances = array();
+
     /**
      * @var int
      */
@@ -43,6 +46,21 @@ class Money
     }
 
     /**
+	 * return instance of MOneyObj - for single use to reduce memory usage in loops
+	 * @param null $currency
+	 * @param int $amount
+	 * @return Money
+	 */
+	public static function getInstance($currency=null, $amount=0) {
+		// get isocode from currency, direct or default
+		$iso_code = $currency instanceof Currency ? $currency->getIsostring() : ($currency ? : Currency::getDefaultCurrency());
+		if (!array_key_exists($iso_code, static::$instances)) {
+	        static::$instances[$iso_code] = new static($amount, new Currency($iso_code));
+	    }
+	    return static::$instances[$iso_code];
+	}
+
+    /**
      * Convenience factory method for a Money object
      * @example $fiveDollar = Money::USD(500);
      * @param string $method
@@ -52,6 +70,15 @@ class Money
     public static function __callStatic($method, $arguments)
     {
         return new Money($arguments[0], new Currency($method));
+    }
+
+	/**
+	 * change the amount
+	 * @param int $amount amount in subunit
+	 */
+	public function setAmount($amount) {
+		$this->amount = $amount;
+		return $this;
     }
 
     /**

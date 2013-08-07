@@ -10,13 +10,16 @@
 
 namespace Money\Tests;
 
+require_once('MoneyTestCase.php');
+
 use PHPUnit_Framework_TestCase;
 use Money\Currency;
 
-class CurrencyTest extends PHPUnit_Framework_TestCase
-{
-    public function setUp()
+class CurrencyTest extends MoneyTestCase {
+
+	public function setUp()
     {
+	    parent::setUp();
         $this->euro1 = new Currency('EUR');
         $this->euro2 = new Currency('EUR');
         $this->usd1 = new Currency('USD');

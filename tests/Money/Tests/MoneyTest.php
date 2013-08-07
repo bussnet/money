@@ -10,19 +10,14 @@
 
 namespace Money\Tests;
 
+require_once('MoneyTestCase.php');
+
 use Money\CurrencyLookupRubyMoney;
 use PHPUnit_Framework_TestCase;
 use Money\Money;
 use Money\Currency;
 
-class MoneyTest extends PHPUnit_Framework_TestCase
-{
-
-	protected function setUp() {
-		parent::setUp();
-		// load RubyMoney CurrencyList and register lookup
-		Currency::setCurrencyLookup(new CurrencyLookupRubyMoney());
-	}
+class MoneyTest extends MoneyTestCase {
 
 	public function testFactoryMethods()
     {
