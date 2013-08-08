@@ -46,14 +46,6 @@ class MoneyTest extends MoneyTestCase {
         $money = new Money(0.01, new Currency('EUR'));
     }
 
-    /**
-     * @expectedException Money\InvalidArgumentException
-     */
-    public function testStringThrowsException()
-    {
-        $money = new Money('100', new Currency('EUR'));
-    }
-
     public function testEquality()
     {
         $m1 = new Money(100, new Currency('EUR'));
@@ -211,14 +203,20 @@ class MoneyTest extends MoneyTestCase {
         $this->assertFalse(Money::EUR(-1)->isPositive());
     }
 
-    public static function provideStrings()
+    public static function provideStringsUSD()
     {
         return array(
             array("1000", 100000),
             array("1000.0", 100000),
             array("1000.00", 100000),
+            array("1000.1", 100010),
+            array("1000.11", 100011),
+            array("1,000.11", 100011),
             array("0.01", 1),
-            array("1", 100),
+	        array("0.001", 0),
+	        array("0.005", 1),
+	        array("0.009", 1),
+	        array("1", 100),
             array("-1000", -100000),
             array("-1000.0", -100000),
             array("-1000.00", -100000),
@@ -233,11 +231,46 @@ class MoneyTest extends MoneyTestCase {
     }
 
     /**
-     * @dataProvider provideStrings
+     * @dataProvider provideStringsUSD
      */
-    public function testStringToUnits($string, $units)
+    public function testStringToUnitsUSD($string, $units)
     {
-        $this->assertEquals($units, Money::stringToUnits($string));
+        $this->assertEquals($units, Money::stringToUnits($string, 'USD'));
+    }
+
+    public static function provideStringsEUR()
+    {
+        return array(
+            array("1000", 100000),
+            array("1000,0", 100000),
+            array("1000,00", 100000),
+            array("1000,1", 100010),
+            array("1000,11", 100011),
+            array("1.000,11", 100011),
+            array("0,01", 1),
+	        array("0,001", 0),
+	        array("0,005", 1),
+	        array("0,009", 1),
+	        array("1", 100),
+            array("-1000", -100000),
+            array("-1000,0", -100000),
+            array("-1000,00", -100000),
+            array("-0,01", -1),
+            array("-1", -100),
+            array("+1000", 100000),
+            array("+1000,0", 100000),
+            array("+1000,00", 100000),
+            array("+0,01", 1),
+            array("+1", 100)
+        );
+    }
+
+    /**
+     * @dataProvider provideStringsEUR
+     */
+    public function testStringToUnitsEUR($string, $units)
+    {
+        $this->assertEquals($units, Money::stringToUnits($string, 'EUR'));
     }
 
 	public function testGetAmount() {

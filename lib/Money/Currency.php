@@ -60,11 +60,13 @@ class Currency
 	/**
 	 * return instance of MOneyObj - for single use to reduce memory usage in loops
 	 * @param null $currency
-	 * @return Money
+	 * @return Currency
 	 */
 	public static function getInstance($currency = null) {
+		if ($currency instanceof Currency)
+			return $currency;
 		// get isocode from currency, direct or default
-		$iso_code = $currency instanceof Currency ? $currency->getIsostring() : ($currency ? : Currency::getDefaultCurrency());
+		$iso_code = $currency ?: Currency::getDefaultCurrency();
 		if (!array_key_exists($iso_code, static::$instances)) {
 			static::$instances[$iso_code] = new static($iso_code);
 		}
@@ -267,7 +269,7 @@ class Currency
 	 * @return string
 	 */
 	public static function format($amount, $currency=null, $params = array()) {
-		return Money::getInstance($currency, $amount)->format($params);
+		return Money::getInstance($currency)->setAmount($amount)->format($params);
 	}
 
 	/**
@@ -281,7 +283,7 @@ class Currency
 	 * @return string
 	 */
 	public static function legibly($amount, $currency=null, $params = array()) {
-		return Money::getInstance($currency, $amount)->getAmount(true, $params);
+		return Money::getInstance($currency)->setAmount($amount)->getAmount(true, $params);
 	}
 
 }

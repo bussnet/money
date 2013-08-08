@@ -32,32 +32,42 @@ class Money
      * Create a Money instance
      * @param  integer $amount    Amount, expressed in the smallest units of $currency (eg cents)
      * @param  \Money\Currency|string $currency as Obj or isoString
+     * @param bool $parseAmountAsMoneyString amount ist unit (not subuit) and in moneyformat (maybe , as dec_mark)
      * @throws \Money\InvalidArgumentException
-     */
-    public function __construct($amount, Currency $currency=null)
+	 */
+	public function __construct($amount, Currency $currency=null, $parseAmountAsMoneyString=false)
     {
-        if (!is_numeric($amount)) {
+        if (!is_int($amount) && !ctype_digit($amount)) { // only numbers(int) - as string or int type
             throw new InvalidArgumentException("The first parameter of Money must be an integer. It's the amount, expressed in the smallest units of currency (eg cents)");
         }
-        $this->amount = $amount;
-	    if (!$currency instanceof Currency)
-		    $currency = new Currency($currency ? : Currency::getDefaultCurrency());
-        $this->currency = $currency;
+	    $this->currency = Currency::getInstance($currency);
+	    $this->setAmount($amount, $parseAmountAsMoneyString);
     }
 
     /**
-	 * return instance of MOneyObj - for single use to reduce memory usage in loops
+	 * return new instance of MoneyObj
 	 * @param null $currency
 	 * @param int $amount
+     * @param bool $parseAmountAsMoneyString amount ist unit (not subuit) and in moneyformat (maybe , as dec_mark)
+     * @return Money
+	 */
+	public static function newInstance($currency=null, $amount=0, $parseAmountAsMoneyString = false) {
+        return new static($amount, $currency, $parseAmountAsMoneyString);
+	}
+
+    /**
+	 * return saved instance of a MoneyObj with given currency - for single use to reduce memory usage in loops
+     * WARNING: NOT SAFE FOR EXTERNAL USAGE - ONLY INTERN OBJ CACHE
+	 * @param null $currency
 	 * @return Money
 	 */
-	public static function getInstance($currency=null, $amount=0) {
+	public static function getInstance($currency=null) {
 		// get isocode from currency, direct or default
 		$iso_code = $currency instanceof Currency ? $currency->getIsostring() : ($currency ? : Currency::getDefaultCurrency());
 		if (!array_key_exists($iso_code, static::$instances)) {
-	        static::$instances[$iso_code] = new static($amount, new Currency($iso_code));
-	    }
-	    return static::$instances[$iso_code];
+			static::$instances[$iso_code] = new static(0, $currency);
+		}
+		return static::$instances[$iso_code];
 	}
 
     /**
@@ -75,9 +85,11 @@ class Money
 	/**
 	 * change the amount
 	 * @param int $amount amount in subunit
+	 * @param bool $parseAmountAsMoneyString amount ist unit (not subuit) and in moneyformat (maybe , as dec_mark)
+	 * @return $this
 	 */
-	public function setAmount($amount) {
-		$this->amount = $amount;
+	public function setAmount($amount, $parseAmountAsMoneyString = false) {
+		$this->amount = $parseAmountAsMoneyString ? self::parseMoneyString($amount, $this->getCurrency()) : $amount;
 		return $this;
     }
 
@@ -296,30 +308,29 @@ class Money
         return $this->amount < 0;
     }
 
-    /**
-     * @param $string
-     * @throws \Money\InvalidArgumentException
-     * @return int
-     */
-    public static function stringToUnits( $string )
-    {
-        //@todo extend the regular expression with grouping characters and eventually currencies
-        if (!preg_match("/(-)?(\d+)([.,])?(\d)?(\d)?/", $string, $matches)) {
-            throw new InvalidArgumentException("The value could not be parsed as money");
-        }
-        $units = $matches[1] == "-" ? "-" : "";
-        $units .= $matches[2];
-        $units .= isset($matches[4]) ? $matches[4] : "0";
-        $units .= isset($matches[5]) ? $matches[5] : "0";
-
-        return (int) $units;
-    }
+	/**
+	 * @see Money::parseMoneyString()
+	 */
+	public static function stringToUnits($string, $currency=null) {
+		return self::parseMoneyString($string, $currency);
+	}
 
 	/**
-	 * @see Money::stringToUnits()
+	 * parse moneyformated string and returns amount in subunit
+	 * @param $string
+	 * @param null $currency
+	 * @return int subunit from Money-string
+	 * @throws InvalidArgumentException
 	 */
-	public static function parseMoneyString($string) {
-		return self::stringToUnits($string);
+	public static function parseMoneyString($string, $currency = null) {
+		$currency = Currency::getInstance($currency);
+		$t = str_replace('.', '\.', $currency->getThousandsSeparator());
+		$d = str_replace('.', '\.', $currency->getDecimalMark());
+		if (!preg_match("/^([-+])?(?:0|([1-9]\d{0,2})(?:$t?(\d{3}))*)(?:$d(\d+))?$/", $string, $matches)) {
+			throw new InvalidArgumentException(sprintf('The string "%s" could not be parsed as money', $string));
+		}
+		$units = (float)(@$matches[1] . @$matches[2] . @$matches[3] . '.' . @$matches[4]) * 100;
+		return round($units);
 	}
 
 	/**
