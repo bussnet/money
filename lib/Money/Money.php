@@ -35,7 +35,7 @@ class Money
      * @param bool $parseAmountAsMoneyString amount ist unit (not subuit) and in moneyformat (maybe , as dec_mark)
      * @throws \Money\InvalidArgumentException
 	 */
-	public function __construct($amount, Currency $currency=null, $parseAmountAsMoneyString=false)
+	public function __construct($amount, $currency=null, $parseAmountAsMoneyString=false)
     {
         if (!is_int($amount) && !ctype_digit($amount)) { // only numbers(int) - as string or int type
             throw new InvalidArgumentException("The first parameter of Money must be an integer. It's the amount, expressed in the smallest units of currency (eg cents)");

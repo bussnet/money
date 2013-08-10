@@ -15,14 +15,14 @@ use Money\MoneyFormater;
 class MoneyFormaterTest extends MoneyTestCase {
 
 	public function testFormater() {
-		$m = new MoneyFormater('EUR');
-		$this->assertEquals('€1.234,56', $m->format(123456));
-		$this->assertEquals('€1.234', $m->format(123456, array('no_cents' => true)));
+		$m = new MoneyFormater('USD');
+		$this->assertEquals('$1,234.56', $m->format(123456));
+		$this->assertEquals('$1,234', $m->format(123456, array('no_cents' => true)));
 
 		// with defaultParams
-		$m = new MoneyFormater('EUR', array('symbol' => '~'));
-		$this->assertEquals('~1.234,56', $m->format(123456));
-		$this->assertEquals('~1.234', $m->format(123456, array('no_cents' => true)));
+		$m = new MoneyFormater('USD', array('symbol' => '~'));
+		$this->assertEquals('~1,234.56', $m->format(123456));
+		$this->assertEquals('~1,234', $m->format(123456, array('no_cents' => true)));
 	}
 
 	public function testLegibly() {
