@@ -300,19 +300,28 @@ class MoneyTest extends MoneyTestCase {
 		/** @var Money $m2 */
 		$m2 = Money::USD(123400); // $1234.00
 
-		$this->assertEquals('$1,234.56', $m1->format());
-		$this->assertEquals('$1,234~56', $m1->format(array('decimal_mark' => '~')));
-		$this->assertEquals('$1_234.56', $m1->format(array('thousands_separator' => '_')));
-		$this->assertEquals('$1,234.56USD', $m1->format(array('with_currency' => true)));
-		$this->assertEquals('<span class="symbol">$</span><span class="amount">1,234.56</span><span class="currency">USD</span>', $m1->format(array('with_currency' => true, 'html' => true)));
-		$this->assertEquals('$1,234', $m1->format(array('no_cents' => true)));
+		$this->assertEquals('$ 1,234.56', $m1->format());
 
-		$this->assertEquals('$1,234.56', $m1->format(array('no_cents_if_zero' => true)));
-		$this->assertEquals('$1,234', $m2->format(array('no_cents_if_zero' => true)));
-		$this->assertEquals('$1,234.56', $m1->format(array('no_cents_if_zero' => false)));
-		$this->assertEquals('$1,234.00', $m2->format(array('no_cents_if_zero' => false)));
+		// different options
+		$this->assertEquals('$ 1,234~56', $m1->format(array('decimal_mark' => '~')));
+		$this->assertEquals('$ 1_234.56', $m1->format(array('thousands_separator' => '_')));
+		$this->assertEquals('$ 1,234.56 USD', $m1->format(array('with_currency' => true)));
+		$this->assertEquals('<span class="symbol">$</span> <span class="amount">1,234.56</span> <span class="currency">USD</span>', $m1->format(array('with_currency' => true, 'html' => true)));
+		$this->assertEquals('1,234.56 $', $m1->format(array('symbol_position' => 'after')));
 
-		$this->assertEquals('1,234.56$', $m1->format(array('symbol_position' => 'after')));
+		// without cents
+		$this->assertEquals('$ 1,234', $m1->format(array('no_cents' => true)));
+		$this->assertEquals('$ 1,234.56', $m1->format(array('no_cents_if_zero' => true)));
+		$this->assertEquals('$ 1,234', $m2->format(array('no_cents_if_zero' => true)));
+		$this->assertEquals('$ 1,234.56', $m1->format(array('no_cents_if_zero' => false)));
+		$this->assertEquals('$ 1,234.00', $m2->format(array('no_cents_if_zero' => false)));
+
+
+		// mixed with no_blank_separator
+		$this->assertEquals('1,234.56$', $m1->format(array('symbol_position' => 'after', 'no_blank_separator' => true)));
+		$this->assertEquals('$1,234.56', $m1->format(array('no_blank_separator' => true)));
+		$this->assertEquals('$1,234.56USD', $m1->format(array('with_currency' => true, 'no_blank_separator' => true)));
+		$this->assertEquals('<span class="symbol">$</span><span class="amount">1,234.56</span><span class="currency">USD</span>', $m1->format(array('with_currency' => true, 'html' => true, 'no_blank_separator' => true)));
 	}
 
 }

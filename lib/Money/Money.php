@@ -344,10 +344,12 @@ class Money
 	 *  thousands_separator => overwrite the currency thousands_separator
 	 *  decimal_mark => overwrite the currency decimal_mark
 	 *  with_currency => append currency ISOCODE
+	 *  no_blank_separator => remove the blank separator between amount and symbol/currency
 	 * @return mixed|string
 	 */
 	public function format($params = array()) {
-
+		// spearator between amount andsymbol/currency
+		$sep = (array_key_exists('no_blank_separator', $params) && $params['no_blank_separator']) ? '' : ' ';
 		// show 'free'
 		if ($this->amount === 0) {
 			if (is_string($params['display_free']))
@@ -395,8 +397,8 @@ class Money
 		// combine symbol and formatted amount
 		if (isset($symbolValue) && !empty($symbolValue)) {
 			$formatted = $symbolPosition === 'before'
-					? "$symbolValue$formatted"
-					: "$formatted$symbolValue";
+					? "$symbolValue$sep$formatted"
+					: "$formatted$sep$symbolValue";
 		}
 
 		if (isset($params['decimal_mark']) && $params['decimal_mark'] && $params['decimal_mark'] !== $this->currency->getDecimalMark()) {
@@ -417,9 +419,9 @@ class Money
 		if (isset($params['with_currency']) && $params['with_currency']) {
 
 			if (isset($params['html']) && $params['html'])
-				$formatted .= '<span class="currency">'. $this->currency->__toString(). '</span>';
+				$formatted .= $sep.'<span class="currency">'. $this->currency->__toString(). '</span>';
 			else
-				$formatted .= $this->currency->__toString();
+				$formatted .= $sep.$this->currency->__toString();
 		}
 
 		return $formatted;
