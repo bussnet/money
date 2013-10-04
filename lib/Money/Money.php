@@ -352,7 +352,7 @@ class Money
 		$sep = (array_key_exists('no_blank_separator', $params) && $params['no_blank_separator']) ? '' : ' ';
 		// show 'free'
 		if ($this->amount === 0) {
-			if (is_string($params['display_free']))
+			if (isset($params['display_free']) && is_string($params['display_free']))
 				return $params['display_free'];
 			elseif (isset($params['display_free']) && $params['display_free'])
 				return "free";
