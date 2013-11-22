@@ -37,7 +37,7 @@ class Money
 	 */
 	public function __construct($amount, $currency=null, $parseAmountAsMoneyString=false)
     {
-        if (!is_int($amount) && !ctype_digit($amount)) { // only numbers(int) - as string or int type
+        if (!$parseAmountAsMoneyString && !is_int($amount) && !ctype_digit($amount)) { // only numbers(int) - as string or int type
             throw new InvalidArgumentException("The first parameter of Money must be an integer. It's the amount, expressed in the smallest units of currency (eg cents)");
         }
 	    $this->currency = Currency::getInstance($currency);
