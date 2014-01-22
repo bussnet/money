@@ -330,7 +330,7 @@ class Money
 			throw new InvalidArgumentException(sprintf('The string "%s" could not be parsed as money', $string));
 		}
 		$units = (float)(@$matches[1] . @$matches[2] . @$matches[3] . '.' . @$matches[4]) * 100;
-		return round($units);
+		return (int)round($units);
 	}
 
 	/**
