@@ -14,21 +14,21 @@ namespace Money;
 class CurrencyPair
 {
     /** @var Currency */
-    private $counterCurrency;
+    private $baseCurrency;
 
     /** @var Currency */
-    private $baseCurrency;
+    private $counterCurrency;
 
     /** @var float */
     private $ratio;
 
     /**
-     * @param \Money\Currency $counterCurrency
      * @param \Money\Currency $baseCurrency
+     * @param \Money\Currency $counterCurrency
      * @param float $ratio
      * @throws \Money\InvalidArgumentException
      */
-    public function __construct(Currency $counterCurrency, Currency $baseCurrency, $ratio)
+    public function __construct(Currency $baseCurrency, Currency $counterCurrency, $ratio)
     {
         if(!is_numeric($ratio)) {
             throw new InvalidArgumentException("Ratio must be numeric");
@@ -52,8 +52,12 @@ class CurrencyPair
 
         $matches = array();
         if (!preg_match($pattern, $iso, $matches)) {
-            // @todo better exception
-            throw new \Exception();
+            throw new InvalidArgumentException(
+                sprintf(
+                    "Can't create currency pair from ISO string '%s', format of string is invalid",
+                    $iso
+                )
+            );
         }
 
         return new static(new Currency($matches[1]), new Currency($matches[2]), $matches[3]);
@@ -66,12 +70,12 @@ class CurrencyPair
      */
     public function convert(Money $money)
     {
-        if (!$money->getCurrency()->equals($this->counterCurrency)) {
+        if (!$money->getCurrency()->equals($this->baseCurrency)) {
             throw new InvalidArgumentException("The Money has the wrong currency");
         }
 
         // @todo add rounding mode?
-        return new Money((int) round($money->getAmount() * $this->ratio), $this->baseCurrency);
+        return new Money((int) round($money->getAmount() * $this->ratio), $this->counterCurrency);
     }
 
     /** @return \Money\Currency */
