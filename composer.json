@@ -26,8 +26,5 @@
         "psr-0": {
             "Money": "lib"
         }
-    },
-    "suggest": {
-        "pink-tie/money-bundle": "For Symfony integration."
     }
 }

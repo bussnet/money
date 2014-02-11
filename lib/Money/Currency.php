@@ -21,10 +21,10 @@ class Currency
     /** @var array */
     private static $currencies = array();
 
-    /** @var array */
+    /** @var string */
     private static $default_currency;
 
-	/** @var  CurrencyLookup */
+	/** @var CurrencyLookup */
 	private static $currency_lookup;
 
 	/** @var bool flag if currency has extended options*/
@@ -59,7 +59,7 @@ class Currency
 
 	/**
 	 * return instance of MOneyObj - for single use to reduce memory usage in loops
-	 * @param null $currency
+	 * @param string|Currency $currency
 	 * @return Currency
 	 */
 	public static function getInstance($currency = null) {
@@ -107,7 +107,7 @@ class Currency
 	}
 
 	/**
-	 * @return array
+	 * @return string
 	 */
 	public static function getDefaultCurrency() {
 		return self::$default_currency;
@@ -264,12 +264,11 @@ class Currency
 	 * @see Money::format()
 	 * @see Money::getInstance()
 	 * @param int $amount as subunit
-	 * @param string|Currency $currency isoCode or currencyObj
 	 * @param array $params params to format
 	 * @return string
 	 */
-	public static function format($amount, $currency=null, $params = array()) {
-		return Money::getInstance($currency)->setAmount($amount)->format($params);
+	public function format($amount, $params = array()) {
+		return Money::getInstance($this)->setAmount($amount)->format($params);
 	}
 
 	/**
@@ -278,12 +277,11 @@ class Currency
 	 * @see Money::getAmount()
 	 * @see Money::getInstance()
 	 * @param int $amount as subunit
-	 * @param string|Currency $currency isoCode or currencyObj
 	 * @param array $params params for Money::getAmount()
 	 * @return string
 	 */
-	public static function legibly($amount, $currency=null, $params = array()) {
-		return Money::getInstance($currency)->setAmount($amount)->getAmount(true, $params);
+	public function legibly($amount, $params = array()) {
+		return Money::getInstance($this)->setAmount($amount)->getAmount(true, $params);
 	}
 
 }
