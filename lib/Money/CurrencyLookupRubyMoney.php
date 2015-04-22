@@ -29,15 +29,31 @@ class CurrencyLookupRubyMoney implements CurrencyLookup {
 	function __construct($file=null, $cache_dir='/tmp/') {
 		$file = $file ? : self::CURRENCY_FILE;
 
-		// read from cache
-		if (file_exists($cache_dir.'/'.basename($file)))
-			$file = $cache_dir . '/' . basename($file);
+		// try and read from cache
+		$cache_file = $cache_dir . '/' . basename($file);
+		if (file_exists($cache_file)) {
+			$content = file_get_contents($cache_file);
+			if ($content) {
+				$this->currencies = json_decode($content, true);
+				if ($this->currencies) {
+					return;
+				}
+			}
+		}
 
-		$this->currencies = json_decode(file_get_contents($file), true);
+		// try and read from server
+		$content = file_get_contents($file);
+		if (!$content) {
+			throw new \Exception('Could not read currencies file from cache or server.');
+		}
+		$this->currencies = json_decode($content, true);
+		if (!$this->currencies) {
+			throw new \Exception('Could decode currencies file from server.');
+		}
 
 		// write to cache
-		if ($cache_dir && file_exists($cache_dir)) {
-			file_put_contents($cache_dir . '/' . basename($file), file_get_contents($file));
+		if ($cache_dir && is_dir($cache_dir)) {
+			file_put_contents($cache_file, $content);
 		}
 	}
 
